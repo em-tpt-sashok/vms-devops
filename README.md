@@ -1,137 +1,95 @@
-readme_content = """
-# VMS Local Development Environment — Onboarding Guide
+# 🚧 VMS Local Development Environment
 
-Welcome to the VMS (Video Management System) local development environment! This guide helps you get started running all services locally using Docker Compose, understanding exposed ports, credentials, volumes, and viewing logs and health metrics.
+This project provides a fully containerized local development environment for the **VMS system**, including:
+
+- Backend (FastAPI)
+- Frontend (React via Vite)
+- TimescaleDB (PostgreSQL)
+- Kafka & Zookeeper
+- MinIO (S3-compatible object storage)
 
 ---
 
-## 1. Run Services Locally via Docker Compose
+## 📦 Prerequisites
 
-All services are defined in the `docker-compose.yml` file. To start the entire environment, simply run:
+Make sure you have the following installed:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Make](https://www.gnu.org/software/make/)
+
+---
+
+## 🚀 Getting Started
+
+### Clone the Repository
 
 ```bash
-make up
-This command will:
+git clone https://your.repo.url/vms-project.git
+cd vms-project
+```
+#### 🚀 Running the Stack
+Use these make commands:
+```
+| Command        | Description                                   |
+| -------------- | --------------------------------------------- |
+| `make build`   | Build and start services (`--build`)          |
+| `make up`      | Start services (without rebuilding)           |
+| `make down`    | Stop and remove containers & volumes          |
+| `make restart` | Recreate the stack from scratch               |
+| `make logs`    | Follow logs from all services                 |
+| `make status`  | Show running services                         |
+| `make clean`   | Prune Docker system & volumes (⚠️ wipes all!) |
+```
 
-Build and start all backend FastAPI microservices (auth, admin, device, ai)
+#### 🌐 Exposed Ports & Services
 
-Start React.js frontend
+| Service        | URL / Port                                     | Description                                       |
+| -------------- | ---------------------------------------------- | ------------------------------------------------- |
+| **Backend**    | [http://localhost:8000](http://localhost:8000) | FastAPI backend microservice                      |
+| **Frontend**   | [http://localhost:5173](http://localhost:5173) | Vite-based React frontend                         |
+| **MinIO**      | [http://localhost:9000](http://localhost:9000) | MinIO S3-compatible object storage (API endpoint) |
+|                | [http://localhost:9001](http://localhost:9001) | MinIO console UI                                  |
+| **PostgreSQL** | `localhost:5432`                               | TimescaleDB (PostgreSQL-compatible)               |
+| **Kafka**      | `localhost:9092`                               | Kafka broker (plaintext only)                     |
+| **Zookeeper**  | `localhost:2181`                               | Zookeeper for Kafka coordination                  |
 
-Start Kafka + Zookeeper (event bus)
+##### 📂 Volumes & Persistent Storage
+```Service	Host Path	Container Path
+Backend	./backend	/app
+Frontend	./frontend	/app/frontend
+PostgreSQL	db_data (Docker)	/var/lib/postgresql/data
+Kafka	kafka (Docker)	/bitnami/kafka
+MinIO	minio_data (Docker)	/data
+```
 
-Start MinIO (video storage)
-
-Start TimescaleDB + PostgreSQL (metadata database)
-
-To stop all running containers:
-
-bash
-Always show details
-
-Copy
-make down
-To remove all containers, networks, and volumes for a fresh start:
-
-bash
-Always show details
-
-Copy
-make clean
-2. Exposed Ports and Default Credentials
-Service	URL / Port	Default Credentials
-Auth API	http://localhost:8001	N/A (configure via env)
-Admin API	http://localhost:8002	N/A
-Device API	http://localhost:8003	N/A
-AI API	http://localhost:8004	N/A
-Frontend	http://localhost:3000	N/A
-Kafka	9092	N/A
-Zookeeper	2181	N/A
-MinIO Console	http://localhost:9001	Access Key: minioadmin
-Secret Key: minioadmin
-MinIO S3 API	http://localhost:9000	Same as above
-TimescaleDB	5432	User: postgres, Pass: postgres
-
-3. Volumes and Persistence
-Data for services is persisted using Docker volumes:
-
-PostgreSQL/TimescaleDB: db_data
-
-MinIO: minio_data
-
-Kafka: kafka
-
-Inspect volumes with:
-
-bash
-Always show details
-
-Copy
-docker volume ls
-4. Logs and Health Metrics
-To view logs for all running services:
-
-bash
-Always show details
-
-Copy
+###### 📈 Logs & Health Checks
+Logs
+```bash
 make logs
-Or view logs of individual services:
+```
+To follow logs for a specific service:
+```bash
+docker-compose logs -f <service-name>
+```
+Health Check (Backend)
+```bash
+curl http://localhost:8000/healthz
+```
 
-bash
-Always show details
+###### ✅ Example Dev Workflow
+```bash
+make build       # Build and start services
+make status      # Check if everything is running
+make logs        # Tail all logs
+make down        # Stop services
+make clean       # Cleanup all Docker resources
+```
 
-Copy
-docker logs -f <container_name>
-Health endpoints (use your browser or curl):
+🧹 Clean Up
+To completely remove containers, images, and volumes:
 
-http://localhost:8001/health — Auth API
-
-http://localhost:8002/health — Admin API
-
-http://localhost:8003/health — Device API
-
-http://localhost:8004/health — AI API
-
-5. Makefile Helper Commands
-Command	Description
-make up	Build and start all services
-make down	Stop all running containers
-make logs	Follow logs for all services
-make clean	Stop containers and remove all volumes
-
-6. How to Use
-Clone this repository.
-
-Copy .env.example to .env and adjust variables as needed.
-
-Run:
-
-bash
-Always show details
-
-Copy
-make up
-Open the frontend: http://localhost:3000
-
-Use backend APIs on their respective ports.
-
-View logs with make logs.
-
-Stop with make down, reset with make clean.
-
-7. Troubleshooting
-Ports in use? Change them in .env or stop conflicting services.
-
-Errors? Check logs via make logs.
-
-Reset everything with make clean if needed.
-
-8. Notes
-This environment is for local development only.
-
-Kafka and Zookeeper are set up for development (PLAINTEXT).
-
-MinIO uses default keys — change them in .env for security.
-
-All backend services expose /health endpoints.
-
+```bash
+make clean
+```
+⚠️ This removes all unused Docker resources, not just project-specific ones.
