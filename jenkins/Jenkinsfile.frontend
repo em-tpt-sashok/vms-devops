@@ -48,10 +48,10 @@ pipeline {
                         snyk test --token=$SNYK_TOKEN
 
                         ./node_modules/.bin/snyk test \
-                          --file=backend/admin/requirements.txt \
+                          --file=frontend/package.json \
                           --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \
-                          --json-file-output=snyk_deps_results.json \
-                          --sarif-file-output=snyk_deps_results.sarif || true
+                          --json-file-output=snyk_frontend_results.json \
+                          --sarif-file-output=snyk_frontend_results.sarif || true
 
                         ./node_modules/.bin/snyk container test ${DOCKER_IMAGE}:${DOCKER_TAG} \
                           --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \
