@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "ashokeminds/vms-FE"
+        DOCKER_IMAGE = "ashokeminds/vms-fe"
         DOCKER_TAG = "latest"
         SNYK_SEVERITY_THRESHOLD = 'high'
         GRYPE_SEVERITY_CUTOFF = 'high'
