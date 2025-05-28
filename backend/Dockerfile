@@ -1,19 +1,36 @@
+# Use official Python slim image
 FROM python:3.11-slim
 
-# 1. Install system dependencies + Poetry
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    pip install poetry && \
-    rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+# Set working directory
 WORKDIR /app
 
-# 4. Copy application code
+# Install system dependencies (if needed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgl1 \
+    libgl1-mesa-glx \
+    libgtk2.0-dev \
+    libv4l-0 \
+    libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy application code
 COPY . .
 
-# 3. Install project dependencies SYSTEM-WIDE
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+# Expose port 8000 (FastAPI default)
+EXPOSE 8000
 
-# 5. Run using Python module syntax (most reliable)
-CMD ["python", "-m", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run FastAPI with Uvicorn
+CMD ["uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
