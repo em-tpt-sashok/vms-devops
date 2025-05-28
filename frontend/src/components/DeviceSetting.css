@@ -1,0 +1,133 @@
+.device-setting-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  padding: 20px;
+  background-color: #2b2b2b;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.device-left-panel {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.device-camera-feed {
+    position: relative;
+  width: 100%;
+  height: 55%;
+  background-color: black; 
+  border: 1px solid #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.device-camera-feed img {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.device-camera-label {
+
+  width: 100%;
+  padding: 5px 0 0 2px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.device-timestamp {
+    position: absolute;
+    bottom: 0;
+  text-align: right;
+  width: 100%;
+  font-size: 11px;
+  color: #aaa;
+  padding: 2px;
+}
+
+.device-button-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.device-button-row button {
+  background-color: #444;
+  border: 1px solid #666;
+  color: white;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 8px; 
+
+}
+
+.device-button-row button:hover {
+  background-color: #666;
+}
+
+.device-right-panel {
+  width: 60%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding-left: 20px;
+  box-sizing: border-box;
+}
+
+.device-group {
+  flex: 1 1 15%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.device-group label {
+  margin-bottom: 2px;
+  font-weight: normal;
+}
+
+.device-group input[type="range"] {
+  width: 100%;
+  accent-color: #ccc;
+}
+
+.device-group input[type="number"],
+.device-group select {
+  width: 100%;
+  padding: 5px;
+  background-color: #3b3b3b;
+  color: white;
+  border: 1px solid #555;
+}
+
+.device-radio-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.device-radio-group input {
+  accent-color: #ccc;
+}
+
+.device-radio-group label {
+  font-weight: normal;
+  font-size: 13px;
+}
+
+.device-group h3 {
+  margin: 10px 0 5px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #eee;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+}

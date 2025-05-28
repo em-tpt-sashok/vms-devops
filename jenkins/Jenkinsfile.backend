@@ -1,0 +1,159 @@
+pipeline {
+    agent any
+
+    environment {
+        PATH = "${env.WORKSPACE}/backend/venv/bin:${env.PATH}"
+        DOCKER_IMAGE = "ashokeminds/vms-admin"
+        DOCKER_TAG = "latest"
+        SNYK_SEVERITY_THRESHOLD = 'high'
+        GRYPE_SEVERITY_CUTOFF = 'high'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('pyLint') {
+            steps {
+                sh '''
+                    cd backend/
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    cd src
+                    pip install -r requirements.txt
+                    pylint src/app/*.py || true
+                    pylint /*.py || true
+                '''
+            }
+        }
+
+        stage('pyTest') {
+            steps {
+                sh '''
+                    cd backend/
+                    pytest backend/tests || true
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'cd backend/ && docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+            }
+        }
+
+        stage('Snyk Security Scan') {
+            steps {
+                withCredentials([string(credentialsId: 'Snyk-Token-api', variable: 'SNYK_TOKEN')]) {
+                    sh '''
+                        # Install Snyk locally
+                        if [ ! -f node_modules/.bin/snyk ]; then
+                            npm install snyk
+                        fi
+
+                        snyk test --token=$SNYK_TOKEN
+
+                        # Dependency scan
+                        ./node_modules/.bin/snyk test \
+                          --file=backend/admin/requirements.txt \
+                          --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \
+                          --json-file-output=snyk_deps_results.json \
+                          --sarif-file-output=snyk_deps_results.sarif || true
+
+                        # Container scan
+                        ./node_modules/.bin/snyk container test ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                          --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \
+                          --json-file-output=snyk_container_results.json \
+                          --sarif-file-output=snyk_container_results.sarif || true
+                    '''
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'snyk_*.json,snyk_*.sarif', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Grype Container Scan') {
+            steps {
+                sh '''
+                    # Install grype if not present
+                    if ! command -v grype >/dev/null; then
+                        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b $PWD
+                    fi
+
+                    # Run scan with severity filtering
+                    ./grype ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                      --output json \
+                      --file grype_results.json \
+                      --only-fixed \
+                      --fail-on ${GRYPE_SEVERITY_CUTOFF} || true
+
+                    # Generate human-readable report
+                    ./grype ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                      --output table \
+                      --file grype_report.txt
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'grype_*.*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('OWASP ZAP Scan') {
+            steps {
+                sh '''
+                    # Generate ZAP report (ensure app is running first)
+                    docker run --rm \
+                      -v $(pwd):/zap/wrk \
+                      -t owasp/zap2docker-stable \
+                      zap-baseline.py \
+                      -t http://host.docker.internal:8001 \
+                      -g gen.conf \
+                      -r zap_report.html \
+                      -x zap_report.xml || true
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'zap_report.*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def grypeResults = readJSON file: 'grype_results.json', quiet: true
+                if (grypeResults?.matches) {
+                    echo "Grype found ${grypeResults.matches.size()} vulnerabilities"
+                }
+
+                if (currentBuild.result == null && fileExists('snyk_deps_results.json')) {
+                    def snykResults = readJSON file: 'snyk_deps_results.json'
+                    if (snykResults?.vulnerabilities?.size() > 0) {
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }
+    }
+}
