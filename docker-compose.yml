@@ -1,29 +1,31 @@
 version: '3.8'
 services:
-  auth:
-    build: ./backend/auth
-    ports: ["8001:8000"]
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
     env_file: .env
-  admin:
-    build: ./backend/admin
-    ports: ["8002:8000"]
-    env_file: .env
-  device:
-    build: ./backend/device
-    ports: ["8003:8000"]
-    env_file: .env
-  ai:
-    build: ./backend/ai
-    ports: ["8004:8000"]
-    env_file: .env
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      retries: 3
+    depends_on:
+      - db
+      - kafka
+      - minio
+      - zookeeper
+    volumes:
+      - ./backend:/app/backend
+      - ./backend/requirements.txt:/app/requirements.txt
+      - ./backend/.env:/app/.env
+      - ./backend/src:/app/src
+      - ./backend/src/requirements.txt:/app/src/requirements.txt
   frontend:
     build: ./frontend
-    ports: ["3000:80"]
+    ports: ["5173:5173"]
     env_file: .env
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app/frontend
+      - ./frontend/.env:/app/.env
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
   kafka:
     image: 'bitnami/kafka:3.3'
     user: root
@@ -64,3 +66,4 @@ volumes:
   db_data:
   minio_data:
   kafka: {}
+  
