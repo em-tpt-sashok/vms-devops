@@ -24,7 +24,6 @@ pipeline {
                     . venv/bin/activate
                     pip install -r requirements.txt
                     pylint src/app/*.py || true
-                    pylint /*.py || true
                 '''
             }
         }
