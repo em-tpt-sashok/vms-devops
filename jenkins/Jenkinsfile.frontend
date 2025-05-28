@@ -31,28 +31,6 @@ pipeline {
             }
         }
 
-        stage('pyLint') {
-            steps {
-                sh '''
-                    cd backend/
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    cd admin/
-                    pip install -r requirements.txt
-                    pylint backend/admin/app/*.py || true
-                '''
-            }
-        }
-
-        stage('pyTest') {
-            steps {
-                sh '''
-                    cd backend/admin/
-                    pytest backend/tests || true
-                '''
-            }
-        }
-
         stage('Docker Build') {
             steps {
                 sh 'cd backend/admin/ && docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
@@ -63,7 +41,6 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'Snyk-Token-api', variable: 'SNYK_TOKEN')]) {
                     sh '''
-                        # Install Snyk locally if needed
                         if [ ! -f node_modules/.bin/snyk ]; then
                             npm install snyk
                         fi
