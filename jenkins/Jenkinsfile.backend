@@ -22,7 +22,6 @@ pipeline {
                     cd backend/
                     python3 -m venv venv
                     . venv/bin/activate
-                    cd src
                     pip install -r requirements.txt
                     pylint src/app/*.py || true
                     pylint /*.py || true
