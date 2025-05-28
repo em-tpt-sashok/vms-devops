@@ -33,7 +33,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'cd backend/admin/ && docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                sh 'cd frontend/ && docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
             }
         }
 
